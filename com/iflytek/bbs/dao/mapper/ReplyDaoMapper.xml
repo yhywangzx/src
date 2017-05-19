@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+ 	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--等价于dao接口的实现 namespace必须和接口的类路径一样 -->
+<mapper namespace="com.iflytek.bbs.dao.ReplyDao">
+
+
+	<resultMap type="Reply" id="ReplyResultMap">
+		<id property="id" column="id" />
+		<result property="replyDate" column="replyDate" />
+		<result property="content" column="content" />
+		<result property="userId" column="userId" />
+		<result property="newsId" column="newsId" />
+		<result property="userName" column="userName" />
+	</resultMap>
+	
+	<!-- id必须和接口中的方法名一样 --> 
+	<insert id="add" parameterType="Reply">
+		<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id">
+		
+			select LAST_INSERT_ID() AS id
+		</selectKey>
+		<![CDATA[ 
+             insert into reply(replyDate,content,userId,newsId) values(#{replyDate},#{content},#{userId},#{newsId})
+        ]]>
+	</insert>
+	
+	<delete id="delete" parameterType="int">
+		<![CDATA[ 
+             delete from reply where id = #{Id}
+        ]]>
+	</delete>
+	<delete id="deleteReply" parameterType="int">
+	<![CDATA[ 
+             delete from reply where newsId = #{newsId}
+        ]]>
+	</delete>
+	<select id="getReplyListByNewsId" resultMap="ReplyResultMap">
+		<![CDATA[ 
+             select r.*,u.name username from reply r inner join user u on r.userid = u.id  where r.newsid = #{newsId}
+        ]]>
+	</select>
+	
+</mapper>

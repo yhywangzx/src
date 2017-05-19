@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+ 	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--等价于dao接口的实现 namespace必须和接口的类路径一样 -->
+<mapper namespace="com.iflytek.bbs.dao.NewsDao">
+	
+	
+	<resultMap type="News" id="NewsResultMap">
+		<id property="id" column="id" />
+		<result property="title" column="title" />
+		<result property="content" column="content" />
+		<result property="publishDate" column="publishDate" />
+		<result property="browserCount" column="browserCount" />
+		<result property="userId" column="userId" />
+		<result property="userName" column="userName" />
+	</resultMap>
+	
+	
+	<insert id="add" parameterType="News">
+		<![CDATA[ 
+             insert into news(title,content,publishDate,browserCount,userId) values(#{title},#{content},#{publishDate},#{browserCount},#{userId})
+        ]]>
+	
+	</insert>
+	
+	<update id="update" parameterType="News">
+		<![CDATA[ 
+            update news set title=#{title},content=#{content},publishDate=#{publishDate},browserCount=#{browserCount},userId=#{userId} where id=#{id}
+        ]]>
+	
+	</update>
+	<delete id="delete" parameterType="int">
+		<![CDATA[ 
+            delete from news where id = #{newsId}
+        ]]>
+	</delete>
+	
+	<select id="getNewsById" parameterType="News" resultMap="NewsResultMap">
+		<![CDATA[ 
+            select n.*,u.name username from news n inner join user u on n.userid = u.id where n.id = #{newsId}
+        ]]>
+	
+	</select>
+	
+	 <select id="getNewsPageList" resultMap="NewsResultMap">
+		<![CDATA[ 
+            select n.*,u.name username  from news n inner join user u on u.id=n.userid order by publishdate DESC limit #{pageIndex},#{pageSize}
+        ]]>
+	
+	</select> 
+	
+	<select id="getTotalCount" resultType="int">
+		<![CDATA[ 
+             select count(*) from news
+        ]]>
+	</select>
+	
+	<select id="getMyNewsPageList" resultMap="NewsResultMap">
+		<![CDATA[ 
+            select n.*,u.name username  from news n inner join user u on u.id=n.userid where userId=#{userId}
+        ]]>
+        <if test="title !=null and title !=''">
+        	and title like "%"#{title}"%"
+        </if>
+        <![CDATA[ 
+          	order by publishdate DESC limit #{pageIndex},#{pageSize}
+		]]>
+	</select> 
+
+	<select id="getMyTotalCount" resultType="int">
+		<![CDATA[ 
+            select count(*) from news where userId=#{userId} and title like "%"#{title}"%"
+        ]]>
+	</select>
+
+
+</mapper>

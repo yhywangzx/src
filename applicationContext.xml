@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:c="http://www.springframework.org/schema/c" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop 
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+	<!-- 自动搜索指定包及其子包下的所有Bean类 -->
+	<context:component-scan base-package="com.iflytek.bbs.service.impl,com.iflytek.bbs.dao,com.iflytek.bbs.util" />
+	
+
+	<!-- 启动对Aspectj的支持 -->
+	<aop:aspectj-autoproxy />
+	
+	
+	<!-- 读取属性文件信息，将这些信息设置成Spring配置文件的数据 -->
+	 <context:property-placeholder location="classpath:jdbc.properties" />
+
+	<!-- 定义数据源Bean，使用C3P0数据源实现 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="user" value="${jdbc.user}" />
+		<property name="password" value="${jdbc.password}" />
+		<property name="driverClass" value="${jdbc.driverClass}" />
+		<property name="jdbcUrl" value="${jdbc.url}" />
+		<property name="initialPoolSize" value="10" />
+		<property name="maxIdleTime" value="100" />
+		<property name="maxPoolSize" value="200" />
+		<property name="minPoolSize" value="10" />
+	</bean>
+
+	<!-- 定义Hibernate的sessionFactory -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="mappingResources">
+			<list>
+				<!-- 列出全部的映射文件 -->
+				<!-- <value>com/iflysse/model/User.hbm.xml</value> -->
+			</list>
+		</property>
+		<property name="annotatedClasses">
+			<list>
+				<!-- 列出全部的标有hibernate注解的PO类 -->
+				<value>com.iflytek.bbs.po.User</value>
+				<value>com.iflytek.bbs.po.Reply</value>
+				<value>com.iflytek.bbs.po.News</value>
+			</list>
+		</property>
+		<!-- 定义Hibernate SessionFactory的属性 -->
+		<property name="hibernateProperties">
+			<props>
+				<!-- SQL方言 -->
+				<prop key="hibernate.dialect">${jdbc.dialect}</prop>
+				<prop key="hibernate.current_session_context_class">org.springframework.orm.hibernate4.SpringSessionContext</prop>
+				<!-- 二级缓存 -->
+				<prop key="hibernate.cache.use_second_level_cache">true</prop>
+				<prop key="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory
+				</prop>
+				<!-- 查询缓存 -->
+				<prop key="hibernate.cache.use_query_cache">true</prop>
+				<!-- 输出执行的SQL语句 -->
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">true</prop>
+				<!-- 是否根据映射创建数据表 -->
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+			</props>
+		</property>
+	</bean>
+
+	<!-- 配置JDBC数据源的局部事务管理器 -->
+	<bean id="txManager"
+		class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+	<!-- 配置事务增强处理Bean，指定事务管理器 -->
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<!-- 所有已get开头的方法是只读的 -->
+			<tx:method name="get*" read-only="true" propagation="REQUIRED" />
+			<!-- 其他方法使用默认的事务管理器 -->
+			<tx:method name="*" propagation="REQUIRED" />
+		</tx:attributes>
+	</tx:advice>
+
+	<!-- AOP配置元素 -->
+	<aop:config>
+		<aop:pointcut expression="execution(* com.iflytek.bbs.service.impl.*.*(..))"
+			id="txPoint" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="txPoint" />
+	</aop:config>
+	
+
+</beans>
+
+
